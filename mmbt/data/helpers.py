@@ -15,10 +15,13 @@ from collections import Counter
 import torch
 import torchvision.transforms as transforms
 from pytorch_pretrained_bert import BertTokenizer
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from mmbt.data.dataset import JsonlDataset
 from mmbt.data.vocab import Vocab
+
+CLASS_RATIO = 56
+DATASET_PERCENTAGE = 1
 
 
 def get_transforms(args):
@@ -127,6 +130,14 @@ def get_data_loaders(args):
 
     args.train_data_len = len(train)
 
+    class_weights = [1 , CLASS_RATIO]
+    data_weights = [0]*args.train_data_len
+    for idx, data in enumerate(train):
+        label = data[-1]
+        data_weights[idx] = class_weights[label]
+    num_samples = int(len(data_weights)*DATASET_PERCENTAGE)
+    balance_sampler = WeightedRandomSampler(data_weights, num_samples=num_samples, replacement=True)
+
     dev = JsonlDataset(
         os.path.join(args.data_path, args.task, "dev.jsonl"),
         tokenizer,
@@ -140,7 +151,8 @@ def get_data_loaders(args):
     train_loader = DataLoader(
         train,
         batch_size=args.batch_sz,
-        shuffle=True,
+        sampler=balance_sampler,
+        shuffle=False,
         num_workers=args.n_workers,
         collate_fn=collate,
     )

@@ -80,11 +80,11 @@ def log_metrics(set_name, metrics, args, logger):
             "{}: Loss: {:.5f} | Macro F1 {:.5f} | Micro F1: {:.5f}".format(
                 set_name, metrics["loss"], metrics["macro_f1"], metrics["micro_f1"]
             )
-        )
+        )  
     else:
         logger.info(
-            "{}: Loss: {:.5f} | Acc: {:.5f}".format(
-                set_name, metrics["loss"], metrics["acc"]
+            "{}: Loss: {:.5f} | Acc: {:.5f} | F1: {:.5f}".format(
+                set_name, metrics["loss"], metrics["acc"], metrics["f1"]
             )
         )
 

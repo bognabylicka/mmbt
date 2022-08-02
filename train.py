@@ -129,6 +129,7 @@ def model_eval(i_epoch, data, model, args, criterion, store_preds=False):
         tgts = [l for sl in tgts for l in sl]
         preds = [l for sl in preds for l in sl]
         metrics["acc"] = accuracy_score(tgts, preds)
+        metrics["f1"] = f1_score(tgts, preds)
 
     if store_preds:
         store_preds_to_disk(tgts, preds, args)
@@ -223,12 +224,14 @@ def train(args):
                 optimizer.zero_grad()
 
         model.eval()
+        metrics_train = model_eval(i_epoch, train_loader, model, args, criterion)
+        log_metrics("Train", metrics_train, args, logger)
         metrics = model_eval(i_epoch, val_loader, model, args, criterion)
         logger.info("Train Loss: {:.4f}".format(np.mean(train_losses)))
         log_metrics("Val", metrics, args, logger)
 
         tuning_metric = (
-            metrics["micro_f1"] if args.task_type == "multilabel" else metrics["acc"]
+            metrics["micro_f1"] if args.task_type == "multilabel" else metrics["f1"]
         )
         scheduler.step(tuning_metric)
         is_improvement = tuning_metric > best_metric
